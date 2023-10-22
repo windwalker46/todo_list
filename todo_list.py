@@ -1,8 +1,7 @@
 # Import the datetime module for handling date inputs and operations
 import datetime
-
+from database_operations import fetch_all_tasks_from_db, initialize_database, add_task_to_db, mark_task_as_done_in_db, delete_task_from_db
 # This list will store all our tasks. Each task is a dictionary.
-tasks = []
 
 # This function displays the main menu of the app to the user.
 def display_menu():
@@ -13,7 +12,6 @@ def display_menu():
     print("4. Delete a task")
     print("5. Exit")
 
-# This function allows the user to add a task.
 def add_task():
     # Get the task description from the user.
     task_description = input("Enter the task description: ")
@@ -35,46 +33,45 @@ def add_task():
         except ValueError:
             print("Invalid date format! Please enter in the format YYYY-MM-DD.")
     
-    # Create the task dictionary and add it to the global tasks list.
-    task = {
-        "description": task_description, 
-        "status": "not done",
-        "priority": priority,
-        "due_date": due_date
-    }
-    tasks.append(task)
+    # Add the task to the database.
+    add_task_to_db(task_description, priority, due_date)
     print("Task added successfully!")
 
-# This function lists all the tasks stored in the tasks list.
 def list_tasks():
+    tasks = fetch_all_tasks_from_db()
     if not tasks:
         print("No tasks found!")
         return
     for index, task in enumerate(tasks):
-        print(f"{index + 1}. {task['description']} - {task['status']} - {task['priority']} - Due on {task['due_date']}")
+        task_id, description, status, priority, due_date = task
+        print(f"{index + 1}. {description} - {status} - {priority} - {due_date}")
 
-# This function allows the user to mark a specified task as done.
+    return tasks
+
 def mark_task_as_done():
-    list_tasks()
+    tasks = list_tasks()
     try:
         task_number = int(input("Enter the task number to mark as done: "))
-        tasks[task_number - 1]["status"] = "done"
+        task_id, _, _, _, _ = tasks[task_number - 1]
+        mark_task_as_done_in_db(task_id)
         print("Task marked as done!")
     except (ValueError, IndexError):
         print("Invalid task number!")
 
-# This function allows the user to delete a specified task.
 def delete_task():
-    list_tasks()
+    tasks = list_tasks()
     try:
         task_number = int(input("Enter the task number to delete: "))
-        del tasks[task_number - 1]
+        task_id, _, _, _, _ = tasks[task_number - 1]
+        delete_task_from_db(task_id)
         print("Task deleted!")
     except (ValueError, IndexError):
         print("Invalid task number!")
 
-# This is the main driver function that manages the user's input and calls the appropriate functions.
 def main():
+    # Initialize the database
+    initialize_database()
+    
     while True:
         display_menu()
         choice = input("Enter your choice: ")
@@ -91,6 +88,7 @@ def main():
             break
         else:
             print("Invalid choice! Please enter a number between 1 and 5.")
+
 
 # This line ensures that the main() function is called only when this script is run directly, not when imported elsewhere.
 if __name__ == "__main__":
